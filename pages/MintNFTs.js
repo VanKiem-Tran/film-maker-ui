@@ -428,7 +428,6 @@ export const MintNFTs = ({ onClusterChange }) => {
 		'44E9cf5BWhdVXJBJigSFPgC1gRgp89bFMj5Y4YHbcCAS',
 		'61R4pYWZugwKYNN4TWwz2Bx2XzNRR7fvvqL7EswZvqm8',
 		'H3FhLg9qenzpc6rkvYXu4UDNK8Q2GezB4tvwg75rdbdy',
-		'DzMerkHrxmu9g9iEoKuSNrWdncPSGApXSrokgs4EmWco',
 		'5ZPt6XNR91nW4QoVUfWESYramvie1FX4Fkv5MtegNcjA',
 	];
 
@@ -439,73 +438,101 @@ export const MintNFTs = ({ onClusterChange }) => {
   console.log('rootHash: ', rootHash);
   console.log('Whitelist Merkle Tree\n ', merkleTree.toString());
 
-  const claimingAdress = keccak256(
-		'3sFDKYCFkWHwfVWzkWj7RL3poZtgWDqJmgPny2DVcV87'
+  const claimingAddress = keccak256(metaplex.identity().publicKey.toBase58());
+  console.log(
+		'metaplex.identity().publicKey.toBase58(): ',
+		metaplex.identity().publicKey.toBase58()
 	);
 
-  const hexProof = merkleTree.getHexProof(claimingAdress);
+  const hexProof = merkleTree.getHexProof(claimingAddress);
+  console.log('hexProof: ', hexProof);
+    const treeKeypair = {
+			_keypair: {
+				publicKey: new PublicKey([
+					130, 96, 227, 176, 23, 192, 31, 191, 93, 185, 129, 115, 71, 51, 169,
+					15, 69, 70, 162, 177, 63, 103, 204, 255, 251, 103, 70, 242, 172, 184,
+					30, 138,
+				]),
+			},
+		};
 
   const onClick = async () => {
     if (hexProof.length > 0)
       await fetch(`http://localhost:4000/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					address: metaplex.identity().publicKey.toBase58(),
+					collection: {
+						mint: 'Cc4bV4bjeNNcGSeSU52JhH1Mtg8NpjNUPQUX8jbMPGcT',
+						tokenAccount: '9r9a2TK67d5tcyDWMZN5pQSWPc1j1xVuPGB6iQtSnQ8N',
+						metadataAccount: '9zK5QaBMPDN7MvQse6JrsinoxMNE63GYGCfzCEyVmWyn',
+						masterEditionAccount:
+							'GW2im5jAqeUQj5qfYQEZqwQ8TyA5oSwyKRowCptRPAyv',
+					},
+					hexProof,
+					treeKeypair,
+				}),
+			});
   };
   return (
-    <div>
-      <div className={styles.container}>
-        <div className={styles.inlineContainer}>
-          <h1 className={styles.title}>Network: </h1>
-          <select onChange={onClusterChange} className={styles.dropdown}>
-            <option value="devnet">Devnet</option>
-            <option value="mainnet">Mainnet</option>
-            <option value="testnet">Testnet</option>
-          </select>
-        </div>
-        {
-          groups.length > 0 &&
-          (
-            <div className={styles.inlineContainer}>
-              <h1 className={styles.title}>Minting Group: </h1>
-              <select onChange={onGroupChanged} className={styles.dropdown} defaultValue={selectedGroup}>
-                {
-                  groups.map(group => {
-                    return (
-                      <option key={group} value={group}>{group}</option>
-                    );
-                  })
-                }
-              </select>
-            </div>
-          )
-        }
-      </div>
-      <div>
-        <div className={styles.container}>
-          <h1 className={styles.title}>NFT Mint Address: {nft ? nft.mint.address.toBase58() : "Nothing Minted yet"}</h1>
-          { disableMint && status }
-          { mintingInProgress && <h1 className={styles.title}>Minting In Progress!</h1> }
-          <div className={styles.nftForm}>
-            {
-              !disableMint && !mintingInProgress && (
-                <button onClick={onClick} disabled={disableMint}>
-                  Mint NFT
-                </button>
-              )
-            }
-          </div>
-          {nft && (
-            <div className={styles.nftPreview}>
-              <h1>{nft.name}</h1>
-              <img
-                src={nft?.json?.image || "/fallbackImage.jpg"}
-                alt="The downloaded illustration of the provided NFT address."
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+		<div>
+			<div className={styles.container}>
+				<div className={styles.inlineContainer}>
+					<h1 className={styles.title}>Network: </h1>
+					<select onChange={onClusterChange} className={styles.dropdown}>
+						<option value="devnet">Devnet</option>
+						<option value="mainnet">Mainnet</option>
+						<option value="testnet">Testnet</option>
+					</select>
+				</div>
+				{groups.length > 0 && (
+					<div className={styles.inlineContainer}>
+						<h1 className={styles.title}>Minting Group: </h1>
+						<select
+							onChange={onGroupChanged}
+							className={styles.dropdown}
+							defaultValue={selectedGroup}
+						>
+							{groups.map((group) => {
+								return (
+									<option key={group} value={group}>
+										{group}
+									</option>
+								);
+							})}
+						</select>
+					</div>
+				)}
+			</div>
+			<div>
+				<div className={styles.container}>
+					<h1 className={styles.title}>
+						NFT Mint Address:{' '}
+						{nft ? nft.mint.address.toBase58() : 'Nothing Minted yet'}
+					</h1>
+					{disableMint && status}
+					{mintingInProgress && (
+						<h1 className={styles.title}>Minting In Progress!</h1>
+					)}
+					<div className={styles.nftForm}>
+						{!disableMint && !mintingInProgress && (
+							<button onClick={onClick}>
+								Mint NFT
+							</button>
+						)}
+					</div>
+					{nft && (
+						<div className={styles.nftPreview}>
+							<h1>{nft.name}</h1>
+							<img
+								src={nft?.json?.image || '/fallbackImage.jpg'}
+								alt="The downloaded illustration of the provided NFT address."
+							/>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
 };
